@@ -40,7 +40,7 @@ sudo -u builder bash -c "updpkgsums && makepkg --printsrcinfo > .SRCINFO"
 
 cd ../..
 git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
-cp aur/${PKGBUILD,.SRCINFO} aur-repo/
+cp aur/{PKGBUILD,.SRCINFO} aur-repo/
 
 cd aur-repo
 git add PKGBUILD .SRCINFO
