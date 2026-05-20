@@ -3,6 +3,7 @@ name: Release
 on:
   schedule:
     - cron: '0 * * * *'
+      timezone: Europe/Istanbul
   workflow_dispatch:
     inputs:
       force_update:
