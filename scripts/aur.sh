@@ -13,7 +13,7 @@ ssh-keyscan aur.archlinux.org >> /root/.ssh/known_hosts
 git config --global user.name "erffy"
 git config --global user.email "$EMAIL"
 
-cd aur/$AUR_REPO
+cd aur
 
 old_ver="$(grep "^pkgver=" PKGBUILD | cut -d= -f2 || printf "")"
 old_rel="$(grep "^pkgrel=" PKGBUILD | cut -d= -f2 || printf "0")"
@@ -40,7 +40,7 @@ sudo -u builder bash -c "updpkgsums && makepkg --printsrcinfo > .SRCINFO"
 
 cd ../..
 git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
-cp aur/$AUR_REPO/{PKGBUILD,.SRCINFO} aur-repo/
+cp aur/${PKGBUILD,.SRCINFO} aur-repo/
 
 cd aur-repo
 git add PKGBUILD .SRCINFO
