@@ -11,7 +11,6 @@ yay -S animecix-desktop
 
 # Using paru
 paru -S animecix-desktop
-
 ```
 
 ## Troubleshooting
