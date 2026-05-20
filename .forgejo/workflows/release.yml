@@ -25,7 +25,6 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Update AUR Package
-        if: steps.check.outputs.update_needed == 'true'
         uses: docker://archlinux:latest
         env:
           EMAIL: ${{ secrets.EMAIL }}
