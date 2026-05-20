@@ -24,22 +24,6 @@ jobs:
           VERSION=$(curl -s https://api.github.com/repos/CaptainSP/animecix-desktop-2/releases/latest | jq -r .tag_name | sed 's/v//')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Check Version
-        id: check
-        env:
-          FORCE: ${{ github.event.inputs.force_update == 'true' && 'true' || 'false' }}
-        run: |
-          AUR_VER=$(curl -s https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=animecix-desktop | grep "^pkgver=" | cut -d= -f2)
-          NEW_VER=${{ steps.version.outputs.version }}
-          
-          if [[ "$AUR_VER" != "$NEW_VER" || "$FORCE" == "true" ]]; then
-            echo "update_needed=true" >> "$GITHUB_OUTPUT"
-            echo "Update needed: AUR=$AUR_VER, New=$NEW_VER, Force=$FORCE"
-          else
-            echo "update_needed=false" >> "$GITHUB_OUTPUT"
-            echo "Already up to date."
-          fi
-
       - name: Update AUR Package
         if: steps.check.outputs.update_needed == 'true'
         uses: docker://archlinux:latest
