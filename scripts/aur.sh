@@ -13,10 +13,15 @@ ssh-keyscan aur.archlinux.org >> /root/.ssh/known_hosts
 git config --global user.name "erffy"
 git config --global user.email "$EMAIL"
 
-cd aur
+git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
 
-old_ver="$(grep "^pkgver=" PKGBUILD | cut -d= -f2 || printf "")"
-old_rel="$(grep "^pkgrel=" PKGBUILD | cut -d= -f2 || printf "0")"
+if [[ -f aur-repo/PKGBUILD ]]; then
+    old_ver="$(grep "^pkgver=" aur-repo/PKGBUILD | cut -d= -f2 || printf "")"
+    old_rel="$(grep "^pkgrel=" aur-repo/PKGBUILD | cut -d= -f2 || printf "0")"
+else
+    old_ver=""
+    old_rel="0"
+fi
 
 if [[ "$old_ver" == "$VERSION" && "${FORCE_UPDATE:-false}" != "true" ]]; then
     echo "Version $VERSION is already up to date. Skipping."
@@ -29,6 +34,8 @@ else
     new_rel="1"
 fi
 
+cd aur
+
 sed -i "s|^pkgver=.*|pkgver=${VERSION}|" PKGBUILD
 sed -i "s|^pkgrel=.*|pkgrel=$new_rel|" PKGBUILD
 
@@ -38,11 +45,9 @@ chown -R builder:builder .
 
 sudo -u builder bash -c "updpkgsums && makepkg --printsrcinfo > .SRCINFO"
 
-cd ..
-git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
-cp aur/{PKGBUILD,.SRCINFO} aur-repo/
+cd ../aur-repo
+cp ../aur/{PKGBUILD,.SRCINFO} .
 
-cd aur-repo
 git add PKGBUILD .SRCINFO
 
 if git diff --cached --quiet && [[ "${FORCE_UPDATE:-false}" != "true" ]]; then
