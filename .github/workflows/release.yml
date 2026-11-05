@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update (increment pkgrel even if version is same)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set Version
+        id: version
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.github.com/repos/CaptainSP/animecix-desktop-2/releases/latest)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            exit 1
+          fi
+
+          VERSION=$(echo "$BODY" | jq -r .tag_name | sed 's/v//')
+
+          if [[ -z "$VERSION" || "$VERSION" == "null" || ! "$VERSION" =~ ^[0-9]+(\.[0-9]+)*(-[a-zA-Z0-9.]+)?$ ]]; then
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check Version
+        id: check
+        env:
+          FORCE: ${{ github.event.inputs.force_update == 'true' && 'true' || 'false' }}
+        run: |
+          AUR_RESPONSE=$(curl -s -w "\n%{http_code}" "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=animecix-desktop")
+          AUR_STATUS=$(echo "$AUR_RESPONSE" | tail -n1)
+          AUR_BODY=$(echo "$AUR_RESPONSE" | sed '$d')
+
+          if [ "$AUR_STATUS" -ne 200 ]; then
+            exit 1
+          fi
+
+          AUR_VER=$(echo "$AUR_BODY" | grep "^pkgver=" | cut -d= -f2)
+          NEW_VER=${{ steps.version.outputs.version }}
+          
+          if [[ -z "$AUR_VER" ]]; then
+            exit 1
+          fi
+          
+          if [[ "$AUR_VER" != "$NEW_VER" || "$FORCE" == "true" ]]; then
+            echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            echo "Update needed: AUR=$AUR_VER, New=$NEW_VER, Force=$FORCE"
+          else
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            echo "Already up to date."
+          fi
+
+      - name: Update AUR Package
+        if: steps.check.outputs.update_needed == 'true'
+        uses: docker://archlinux:latest
+        env:
+          EMAIL: ${{ secrets.EMAIL }}
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+          AUR_REPO: "animecix-desktop"
+          FORCE_UPDATE: ${{ github.event.inputs.force_update == 'true' && 'true' || 'false' }}
+        with:
+          entrypoint: bash
+          args: ${{ github.workspace }}/scripts/aur.sh

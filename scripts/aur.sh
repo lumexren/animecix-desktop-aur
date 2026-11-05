@@ -10,8 +10,9 @@ echo "$AUR_SSH_KEY" > /root/.ssh/id_ed25519
 chmod 600 /root/.ssh/id_ed25519
 ssh-keyscan aur.archlinux.org >> /root/.ssh/known_hosts
 
-git config --global user.name "erffy"
+git config --global user.name "lumexren"
 git config --global user.email "$EMAIL"
+git config --global --add safe.directory '*'
 
 git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
 
