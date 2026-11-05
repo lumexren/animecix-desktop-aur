@@ -17,8 +17,8 @@ git config --global --add safe.directory '*'
 git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur-repo
 
 if [[ -f aur-repo/PKGBUILD ]]; then
-    old_ver="$(grep "^pkgver=" aur-repo/PKGBUILD | cut -d= -f2 || printf "")"
-    old_rel="$(grep "^pkgrel=" aur-repo/PKGBUILD | cut -d= -f2 || printf "0")"
+    old_ver="$(grep "^pkgver=" aur-repo/PKGBUILD 2>/dev/null | cut -d= -f2 | tr -d ' "' || printf "")"
+    old_rel="$(grep "^pkgrel=" aur-repo/PKGBUILD 2>/dev/null | cut -d= -f2 | tr -d ' "' || printf "0")"
 else
     old_ver=""
     old_rel="0"
@@ -40,8 +40,10 @@ cd aur
 sed -i "s|^pkgver=.*|pkgver=${VERSION}|" PKGBUILD
 sed -i "s|^pkgrel=.*|pkgrel=$new_rel|" PKGBUILD
 
-useradd -m builder
-echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+if ! id -u builder >/dev/null 2>&1; then
+    useradd -m builder
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+fi
 chown -R builder:builder .
 
 sudo -u builder bash -c "updpkgsums && makepkg --printsrcinfo > .SRCINFO"

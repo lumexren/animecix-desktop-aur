@@ -76,4 +76,4 @@ jobs:
           FORCE_UPDATE: ${{ github.event.inputs.force_update == 'true' && 'true' || 'false' }}
         with:
           entrypoint: bash
-          args: ${{ github.workspace }}/scripts/aur.sh
+          args: scripts/aur.sh
